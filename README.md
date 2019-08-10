@@ -1,5 +1,5 @@
 # MarchingCubes-UE4
-<h1>Procedural terrain entirely destructible</h1>.
+<h1>Procedural terrain entirely destructible.</h1>
 
 Generate using FastNoise and Marching cubes algorithm.
 
