@@ -1,5 +1,6 @@
 # MarchingCubes-UE4
-<h1>Procedural terrain entirely destructible.</h1>
+<h2>Procedural terrain entirely destructible.</h2>
+<h2>Important: the project still needs a lots of improvements, he is far from being perfect</h2>
 
 Generate using FastNoise and Marching cubes algorithm.
 
