@@ -37,7 +37,11 @@ int UMarchingCubesClass::CalculateCubeIndex(TArray<UVoxel*>& Voxels, float isoVa
 void UMarchingCubesClass::GenerateCubeShape(TArray<UVoxel*>& Voxels, int cubeIndex, AChunk * chunk, float isoValue)
 {
 	int VerticeIndex = chunk->Vertices.Num();
-	FVector TempVertices [12];
+	int NormalIndex = chunk->Normales.Num();
+	FVector TempVertices[12];
+	int PosNormales[12] {0};
+	bool HasAlreadyBeenAdded[12] {false};
+	int PositionInVerticesArray[12] {0};
 
 	if (edgeTable[cubeIndex] & 1)
 	{
@@ -53,7 +57,7 @@ void UMarchingCubesClass::GenerateCubeShape(TArray<UVoxel*>& Voxels, int cubeInd
 	}
 	if (edgeTable[cubeIndex] & 8)
 	{
-		TempVertices[3] = (CalculateInterpolation(Voxels[3], Voxels[0], isoValue));
+		TempVertices[3] = (CalculateInterpolation(Voxels[0], Voxels[3], isoValue));
 	}
 	if (edgeTable[cubeIndex] & 16)
 	{
@@ -90,18 +94,6 @@ void UMarchingCubesClass::GenerateCubeShape(TArray<UVoxel*>& Voxels, int cubeInd
 
 	for (size_t i = 0; triTable[cubeIndex][i] != -1; i += 3) {
 
-		chunk->Vertices.Add(TempVertices[triTable[cubeIndex][i]]);
-		chunk->Triangles.Add(VerticeIndex);
-		VerticeIndex++;
-
-		chunk->Vertices.Add(TempVertices[triTable[cubeIndex][i + 1]]);
-		chunk->Triangles.Add(VerticeIndex);
-		VerticeIndex++;
-
-		chunk->Vertices.Add(TempVertices[triTable[cubeIndex][i + 2]]);
-		chunk->Triangles.Add(VerticeIndex);
-		VerticeIndex++;
-
 		FVector Vertice1 = TempVertices[triTable[cubeIndex][i]];
 		FVector Vertice2 = TempVertices[triTable[cubeIndex][i + 1]];
 		FVector Vertice3 = TempVertices[triTable[cubeIndex][i + 2]];
@@ -111,11 +103,71 @@ void UMarchingCubesClass::GenerateCubeShape(TArray<UVoxel*>& Voxels, int cubeInd
 		FVector NormaleTriangle = AB ^ AC;
 		NormaleTriangle.Normalize(1.0f);
 
-		chunk->Normales.Add(-NormaleTriangle);
-		chunk->Normales.Add(-NormaleTriangle);
-		chunk->Normales.Add(-NormaleTriangle);
-			
+		if (!HasAlreadyBeenAdded[triTable[cubeIndex][i]]) {
+			chunk->Vertices.Add(TempVertices[triTable[cubeIndex][i]]);
+			HasAlreadyBeenAdded[triTable[cubeIndex][i]] = true;
+			PositionInVerticesArray[triTable[cubeIndex][i]] = VerticeIndex;
+
+			PosNormales[triTable[cubeIndex][i]] = NormalIndex;
+			chunk->Normales.Add(-NormaleTriangle);
+			NormalIndex++;
+
+			chunk->Triangles.Add(VerticeIndex);
+			VerticeIndex++;
+		}
+		else {
+			chunk->Triangles.Add(PositionInVerticesArray[triTable[cubeIndex][i]]);
+			FVector NewNormale = CalculateMiddleVectorBetweenTwo(chunk->Normales[PosNormales[triTable[cubeIndex][i]]], -NormaleTriangle, true);
+			chunk->Normales[PosNormales[triTable[cubeIndex][i]]] = NewNormale;
+		}
+		
+		if (!HasAlreadyBeenAdded[triTable[cubeIndex][i + 1]]) {
+			chunk->Vertices.Add(TempVertices[triTable[cubeIndex][i + 1]]);
+			HasAlreadyBeenAdded[triTable[cubeIndex][i + 1]] = true;
+			PositionInVerticesArray[triTable[cubeIndex][i + 1]] = VerticeIndex;
+
+			PosNormales[triTable[cubeIndex][i + 1]] = NormalIndex;
+			chunk->Normales.Add(-NormaleTriangle);
+			NormalIndex++;
+
+			chunk->Triangles.Add(VerticeIndex);
+			VerticeIndex++;
+		}
+		else {
+			chunk->Triangles.Add(PositionInVerticesArray[triTable[cubeIndex][i + 1]]);
+			FVector NewNormale = CalculateMiddleVectorBetweenTwo(chunk->Normales[PosNormales[triTable[cubeIndex][i]]], -NormaleTriangle, true);
+			chunk->Normales[PosNormales[triTable[cubeIndex][i]]] = NewNormale;
+		}
+
+		if (!HasAlreadyBeenAdded[triTable[cubeIndex][i + 2]]) {
+			chunk->Vertices.Add(TempVertices[triTable[cubeIndex][i + 2]]);
+			HasAlreadyBeenAdded[triTable[cubeIndex][i + 2]] = true;
+			PositionInVerticesArray[triTable[cubeIndex][i + 2]] = VerticeIndex;
+
+			PosNormales[triTable[cubeIndex][i + 2]] = NormalIndex;
+			chunk->Normales.Add(-NormaleTriangle);
+			NormalIndex++;
+
+			chunk->Triangles.Add(VerticeIndex);
+			VerticeIndex++;
+		}
+		else {
+			chunk->Triangles.Add(PositionInVerticesArray[triTable[cubeIndex][i + 2]]);
+			FVector NewNormale = CalculateMiddleVectorBetweenTwo(chunk->Normales[PosNormales[triTable[cubeIndex][i]]], -NormaleTriangle, true);
+			chunk->Normales[PosNormales[triTable[cubeIndex][i]]] = NewNormale;
+		}
 	}
+}
+
+FVector UMarchingCubesClass::CalculateMiddleVectorBetweenTwo(FVector A, FVector B, bool Normalize)
+{
+	 FVector Addition(A.X + B.X, A.Y + B.Y, A.Z + B.Z);
+	 if (Normalize)
+	 {
+		 Addition.Normalize(1.0f);
+	 }
+	 return Addition;
+	
 }
 
 FVector UMarchingCubesClass::CalculateInterpolation(UVoxel * Voxel1, UVoxel * Voxel2, float isoValue)

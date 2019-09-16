@@ -2,6 +2,7 @@
 
 #include "MarchingCubesProjectile.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "Runtime/Engine/Public/DrawDebugHelpers.h"
 #include "Components/SphereComponent.h"
 #include "Generation/Grid/Chunk.h"
 #include "Generation/Grid/WorldMap.h"
@@ -43,9 +44,9 @@ void AMarchingCubesProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* Other
 
 		Destroy();
 	}
-	if (!HAsHit)
+	/*if (!HAsHit)
 	{
-		HAsHit = true;
+		HAsHit = true;*/
 		if (OtherActor->IsA(AChunk::StaticClass()))
 		{
 			AChunk* Chunk = Cast<AChunk>(OtherActor);
@@ -53,69 +54,51 @@ void AMarchingCubesProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* Other
 			if (Chunk->Map->CanDestroy) {
 				UVoxel* VoxelHit = Chunk->Map->FindVoxelByWolrdLocation(Hit.Location, Chunk);
 
-				int rayon = 100;
+				int rayon = Chunk->Map->RayonDig;;
 
 
 				if (VoxelHit != nullptr)
 				{
-					int XStart = VoxelHit->X - 3;
-					int YStart = VoxelHit->Y - 3;
-					int ZStart = VoxelHit->Z - 3;
+					if (Chunk->Map->ShowDebugDestroy) {
+						DrawDebugSphere(GetWorld(), VoxelHit->WorldPosition, rayon, 26, FColor(255, 0, 0), true, 100, 0, 2);
+					}
+					int XStart = VoxelHit->X - 10;
+					int YStart = VoxelHit->Y - 10;
+					int ZStart = VoxelHit->Z - 10;
 
-					for (size_t x = XStart; x < VoxelHit->X + 3; x++)
+					for (size_t x = XStart; x < VoxelHit->X + 10; x++)
 					{
-						for (size_t y = YStart; y < VoxelHit->Y + 3; y++)
+						for (size_t y = YStart; y < VoxelHit->Y + 10; y++)
 						{
-							for (size_t z = ZStart; z < VoxelHit->Z + 3; z++)
+							for (size_t z = ZStart; z < VoxelHit->Z + 10; z++)
 							{
 								UVoxel* VoxelCheck = Chunk->Map->FindVoxelByGridLocation(x, y, z);
-								if (VoxelCheck != nullptr)
+								if (GetDistance(VoxelCheck->WorldPosition, VoxelHit->WorldPosition) < rayon)
 								{
-									float distance = GetDistance(VoxelHit->WorldPosition, VoxelCheck->WorldPosition);
-									if (distance < rayon)
-									{
-										VoxelCheck->Density = 5;
-
-									}
+									VoxelCheck->Density = 0.5;
 								}
-
 							}
 						}
 					}
 
-					/*for (size_t x = XStart; x < VoxelHit->X + 3; x++)
+					for (size_t x = XStart; x < VoxelHit->X + 10; x++)
 					{
-						for (size_t y = YStart; y < VoxelHit->Y + 3; y++)
+						for (size_t y = YStart; y < VoxelHit->Y + 10; y++)
 						{
-							for (size_t z = ZStart; z < VoxelHit->Z + 3; z++)
+							for (size_t z = ZStart; z < VoxelHit->Z + 10; z++)
 							{
 								UVoxel* VoxelCheck = Chunk->Map->FindVoxelByGridLocation(x, y, z);
-								if (VoxelCheck != nullptr)
-								{
-									UVoxel* VoxelForward = VoxelCheck->FindVoxelByDirection(EDirectionEnum::Forward);
-									UVoxel* VoxelRight = VoxelCheck->FindVoxelByDirection(EDirectionEnum::Right);
-									UVoxel* VoxelTop = VoxelCheck->FindVoxelByDirection(EDirectionEnum::Top);
-
-									if (VoxelForward != nullptr)
-									{
-										CreateXCrossing(VoxelCheck, VoxelForward, rayon, Hit.Location);
-
-									}
-									if (VoxelRight != nullptr)
-									{
-										CreateYCrossing(VoxelCheck, VoxelRight, rayon, Hit.Location);
-
-									}
-									if (VoxelTop != nullptr)
-									{
-										CreateZCrossing(VoxelCheck, VoxelTop, rayon, Hit.Location);
-
-									}
-								}
+								UVoxel* VoxelTop = Chunk->Map->FindVoxelByGridLocation(x, y, z + 1);
+								UVoxel* VoxelRight = Chunk->Map->FindVoxelByGridLocation(x, y + 1, z);
+								UVoxel* VoxelForward = Chunk->Map->FindVoxelByGridLocation(x + 1, y, z);
+								CheckAxis(VoxelCheck, VoxelForward, rayon, VoxelHit->WorldPosition, Chunk->Map->IsoValue, 0);
+								CheckAxis(VoxelCheck, VoxelRight, rayon, VoxelHit->WorldPosition, Chunk->Map->IsoValue, 1);
+								CheckAxis(VoxelCheck, VoxelTop, rayon, VoxelHit->WorldPosition, Chunk->Map->IsoValue, 2);
+								
 
 							}
 						}
-					}*/
+					}
 
 					AChunk* ChunkTop = Chunk->FindChunkByDirection(EDirectionEnum::Top);
 					AChunk* ChunkBottom = Chunk->FindChunkByDirection(EDirectionEnum::Bottom);
@@ -159,120 +142,106 @@ void AMarchingCubesProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* Other
 			}
 			
 		}
-	}
+	//}
 	
 }
 
 float AMarchingCubesProjectile::GetDistance(FVector A, FVector B)
 {
-	return sqrt(pow(B.X - A.X, 2) + pow(B.Z - A.Z, 2));
+	return sqrt(pow(B.X - A.X, 2) + pow(B.Y - A.Y, 2) + pow(B.Z - A.Z, 2));
 }
 
-void AMarchingCubesProjectile::CreateXCrossing(UVoxel * Voxel, UVoxel * NextVoxelForward, int rayon, FVector HitLocation)
+void AMarchingCubesProjectile::CheckAxis(UVoxel * Voxel, UVoxel * NextVoxel, int rayon, FVector HitLocation, float IsoValue, int Axis)
 {
+	bool VoxelInCircle {false};
+	bool NextVoxelInCircle {false};
+	bool NeedNewdensity {false};
+	FVector CrossingPoint {0.0f,0.0f,0.0f};
 
-	int RayonCarre = rayon * rayon;
-	if (Voxel->Density < NextVoxelForward->Density)
+	if (GetDistance(Voxel->WorldPosition, HitLocation) < rayon) {
+		VoxelInCircle = true;
+
+	}
+	if (GetDistance(NextVoxel->WorldPosition, HitLocation) < rayon) {
+		NextVoxelInCircle = true;
+	}
+
+	if (VoxelInCircle || NextVoxelInCircle)
 	{
-		float z2 = Voxel->WorldPosition.Z - HitLocation.Z;
-		z2 *= z2;
-		if (Voxel->Density < 0)
+		if (Voxel->Density < 0 || NextVoxel->Density < 0)
 		{
-			float x = Voxel->WorldPosition.X - HitLocation.X;
-			if (x * x + z2 <= RayonCarre)
-			{
-				x = HitLocation.X + sqrt(RayonCarre - z2);
 
-				float XDiff = abs(NextVoxelForward->X - x);
-				NextVoxelForward->Density = XDiff/Voxel->Chunk->Map->SizeVoxel;
-
-
-
+			if (VoxelInCircle && !NextVoxelInCircle) {
+				CrossingPoint = GetCrossingPoint(Voxel, NextVoxel, HitLocation, rayon, true);
+				NeedNewdensity = true;
 			}
-		}
-		if (NextVoxelForward->Density < 0)
-		{
-			float x = NextVoxelForward->WorldPosition.X - HitLocation.X;
-			if (x * x + z2 <= RayonCarre)
-			{
-				x = HitLocation.X + sqrt(RayonCarre - z2);
+			else if (!VoxelInCircle && NextVoxelInCircle) {
+				CrossingPoint = GetCrossingPoint(Voxel, NextVoxel, HitLocation, rayon, false);
+				NeedNewdensity = true;
+			}
 
-				float XDiff = abs(Voxel->X - x);
-				Voxel->Density = XDiff / Voxel->Chunk->Map->SizeVoxel;
+			if (NeedNewdensity) {
 
+				float muVoxel{ 0.0f };
+				float muNextVoxel{ 0.0f };
+
+				switch (Axis)
+				{
+					case 0:
+						muVoxel = (CrossingPoint.X - Voxel->WorldPosition.X) / (NextVoxel->WorldPosition.X - Voxel->WorldPosition.X);
+						muNextVoxel = (CrossingPoint.X - NextVoxel->WorldPosition.X) / (Voxel->WorldPosition.X - NextVoxel->WorldPosition.X);
+						break;
+					case 1:
+						muVoxel = (CrossingPoint.Y - Voxel->WorldPosition.Y) / (NextVoxel->WorldPosition.Y - Voxel->WorldPosition.Y);
+						muNextVoxel = (CrossingPoint.Y - NextVoxel->WorldPosition.Y) / (Voxel->WorldPosition.Y - NextVoxel->WorldPosition.Y);
+						break;
+					case 2:
+						muVoxel = (CrossingPoint.Z - Voxel->WorldPosition.Z) / (NextVoxel->WorldPosition.Z - Voxel->WorldPosition.Z);
+						muNextVoxel = (CrossingPoint.Z - NextVoxel->WorldPosition.Z) / (Voxel->WorldPosition.Z - NextVoxel->WorldPosition.Z);
+						break;
+					default:
+						break;
+				}
+
+				if (Voxel->HasBeenDig)
+				{
+					if (!NextVoxel->HasBeenDig) {
+						NextVoxel->Density = (Voxel->Density*muNextVoxel - IsoValue) / (muNextVoxel - 1);
+						NextVoxel->HasBeenDig = true;
+					}
+				}
+				else
+				{
+					Voxel->Density = (NextVoxel->Density*muVoxel - IsoValue) / (muVoxel - 1);
+					Voxel->HasBeenDig = true;
+				}
 			}
 		}
 	}
 
+	
 }
 
-void AMarchingCubesProjectile::CreateYCrossing(UVoxel * Voxel, UVoxel * NextVoxelRight, int rayon, FVector HitLocation)
+FVector AMarchingCubesProjectile::GetCrossingPoint(UVoxel * Voxel, UVoxel * NextVoxel, FVector CenterOfCircle, float rayon, bool IsVoxelCheckInSphere)
 {
-
-
-	int RayonCarre = rayon * rayon;
-	if (Voxel->Density < NextVoxelRight->Density)
-	{
-		float z2 = Voxel->WorldPosition.Z - HitLocation.Z;
-		z2 *= z2;
-		if (Voxel->Density < 0)
-		{
-			float y = Voxel->WorldPosition.Y - HitLocation.Y;
-			if (y * y + z2 <= RayonCarre)
-			{
-				y = HitLocation.Y + sqrt(RayonCarre - z2);
-
-				float YDiff = abs(NextVoxelRight->Y - y);
-				NextVoxelRight->Density = YDiff / Voxel->Chunk->Map->SizeVoxel;
-
-			}
-		}
-		if (NextVoxelRight->Density < 0)
-		{
-			float y = NextVoxelRight->WorldPosition.Y - HitLocation.Y;
-			if (y * y + z2 <= RayonCarre)
-			{
-				y = HitLocation.Y + sqrt(RayonCarre - z2);
-				
-				float YDiff = abs(Voxel->Y - y);
-				Voxel->Density = YDiff / Voxel->Chunk->Map->SizeVoxel;
-
-			}
-		}
+	int wantedResult {0};
+	float mu {0.0f};
+	FVector CrossingPoint {0.0f,0.0f,0.0f};
+	float a = pow(NextVoxel->WorldPosition.X - Voxel->WorldPosition.X, 2.0f) + pow(NextVoxel->WorldPosition.Y - Voxel->WorldPosition.Y, 2.0f) + pow(NextVoxel->WorldPosition.Z - Voxel->WorldPosition.Z, 2.0f);
+	float b = 2 * ((NextVoxel->WorldPosition.X - Voxel->WorldPosition.X)*(Voxel->WorldPosition.X - CenterOfCircle.X) + (NextVoxel->WorldPosition.Y - Voxel->WorldPosition.Y)*(Voxel->WorldPosition.Y - CenterOfCircle.Y) + (NextVoxel->WorldPosition.Z - Voxel->WorldPosition.Z)*(Voxel->WorldPosition.Z - CenterOfCircle.Z));
+	float c = pow(CenterOfCircle.X, 2.0f) + pow(CenterOfCircle.Y, 2.0f) + pow(CenterOfCircle.Z, 2.0f) + pow(Voxel->WorldPosition.X, 2.0f) + pow(Voxel->WorldPosition.Y, 2.0f) + pow(Voxel->WorldPosition.Z, 2.0f) - 2 * (CenterOfCircle.X*Voxel->WorldPosition.X + CenterOfCircle.Y*Voxel->WorldPosition.Y + CenterOfCircle.Z*Voxel->WorldPosition.Z) - pow(rayon, 2.0f);
+	if (IsVoxelCheckInSphere) {
+		mu = (-b + (sqrt(pow(b, 2.0f) - 4 * a * c))) / (2 * a);
 	}
+	else{
+		mu = (-b - (sqrt(pow(b, 2.0f) - 4 * a * c))) / (2 * a);
+	}
+
+	//mu = (-b + (sqrt(pow(b, 2.0f) - 4 * a * c))) / (2*a);
+	CrossingPoint.X = Voxel->WorldPosition.X + mu * (NextVoxel->WorldPosition.X - Voxel->WorldPosition.X);
+	CrossingPoint.Y = Voxel->WorldPosition.Y + mu * (NextVoxel->WorldPosition.Y - Voxel->WorldPosition.Y);
+	CrossingPoint.Z = Voxel->WorldPosition.Z + mu * (NextVoxel->WorldPosition.Z - Voxel->WorldPosition.Z);
+
+	return CrossingPoint;
 }
 
-void AMarchingCubesProjectile::CreateZCrossing(UVoxel * Voxel, UVoxel * NextVoxelTop, int rayon, FVector HitLocation)
-{
-
-
-	int RayonCarre = rayon * rayon;
-	if (Voxel->Density < NextVoxelTop->Density)
-	{
-		float y2 = Voxel->WorldPosition.Y - HitLocation.Y;
-		y2 *= y2;
-		if (Voxel->Density < 0)
-		{
-			float z = Voxel->WorldPosition.Z - HitLocation.Z;
-			if (z * z + y2 <= RayonCarre)
-			{
-				z = HitLocation.Z + sqrt(RayonCarre - y2);
-
-				float ZDiff = abs(NextVoxelTop->Z - z);
-				NextVoxelTop->Density = ZDiff / Voxel->Chunk->Map->SizeVoxel;
-
-			}
-		}
-		if (NextVoxelTop->Density < 0)
-		{
-			float z = NextVoxelTop->WorldPosition.Z - HitLocation.Z;
-			if (z * z + y2 <= RayonCarre)
-			{
-				z = HitLocation.Y + sqrt(RayonCarre - y2);
-				float ZDiff = abs(Voxel->Z - z);
-				Voxel->Density = ZDiff / Voxel->Chunk->Map->SizeVoxel;
-
-			}
-		}
-	}
-}

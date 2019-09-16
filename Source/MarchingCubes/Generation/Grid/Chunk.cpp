@@ -92,12 +92,6 @@ void AChunk::GenerateMesh()
 
 }
 
-void AChunk::InitializeArray()
-{
-	Vertices.Init(FVector(0,0,0), 0);
-	Triangles.Init(0, 0);
-}
-
 UVoxel * AChunk::FindVoxelInChunk(int x, int y, int z)
 {
 	if (x >= 0 && y >= 0 && z >= 0 && x <= SizeChunkX - 1 && y <= SizeChunkY - 1 && z <= SizeChunkZ - 1)

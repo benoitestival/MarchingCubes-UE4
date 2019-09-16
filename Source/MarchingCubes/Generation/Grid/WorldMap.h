@@ -26,6 +26,7 @@ public:
 	UPROPERTY()
 	bool ReadyForMeshGeneration {false};
 
+
 	UPROPERTY(Category = "Noise", EditAnywhere)
 	float ScaleX {0.1f};
 
@@ -33,10 +34,19 @@ public:
 	float ScaleY {0.1f};
 
 	UPROPERTY(Category = "Noise", EditAnywhere)
-	int Multiplicator {50};
+	float HeightMultiplicator {50.0f};
 
 	UPROPERTY(Category = "Noise", EditAnywhere)
 	int Offset {10};
+
+	UPROPERTY(Category = "Noise", EditAnywhere)
+	float octaves {0.0f};;
+
+	UPROPERTY(Category = "Noise", EditAnywhere)
+	float persistance {0.0f};;
+
+	UPROPERTY(Category = "Noise", EditAnywhere)
+	float lacunarity {0.0f};;
 
 	UPROPERTY(Category ="MapSize" , EditAnywhere)
 	int nbrChunkX {1};
@@ -59,8 +69,24 @@ public:
 	UPROPERTY(Category = "MapSize", EditAnywhere)
 	unsigned int SizeVoxel {40};
 
+	UPROPERTY(Category = "OtherMapParameters", EditAnywhere)
+	float IsoValue {0.0f};
+
+	UPROPERTY(Category = "OtherMapParameters", EditAnywhere)
+	float RayonDig {300.0f};
+
 	UPROPERTY(Category = "Other", EditAnywhere)
 	bool CanDestroy {true};
+
+	UPROPERTY(Category = "Other", EditAnywhere)
+	bool UseRectShape {false};
+
+	UPROPERTY(Category = "Other", EditAnywhere)
+	bool ShowLogNoise {false};
+
+	UPROPERTY(Category = "Other", EditAnywhere)
+	bool ShowDebugDestroy {false};
+
 
 	UPROPERTY()
 	unsigned int TotalChunkFaceElements {0};

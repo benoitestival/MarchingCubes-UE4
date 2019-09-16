@@ -36,9 +36,9 @@ public:
 	FORCEINLINE class UProjectileMovementComponent* GetProjectileMovement() const { return ProjectileMovement; }
 
 	float GetDistance(FVector A, FVector B);
-	void CreateXCrossing(UVoxel* Voxel, UVoxel* NextVoxelForward, int rayon , FVector HitLocation);
-	void CreateYCrossing(UVoxel* Voxel, UVoxel* NextVoxelRight, int rayon, FVector HitLocation);
-	void CreateZCrossing(UVoxel* Voxel, UVoxel* NextVoxelTop, int rayon, FVector HitLocation);
+	void CheckAxis(UVoxel* Voxel, UVoxel* NextVoxel, int rayon, FVector HitLocation, float IsoValue, int Axis);
+	FVector GetCrossingPoint(UVoxel* Voxel, UVoxel* NextVoxel, FVector CenterOfCircle, float rayon ,bool IsVoxelCheckInSphere);
+	
 
 };
 

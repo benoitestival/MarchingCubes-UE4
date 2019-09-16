@@ -57,7 +57,8 @@ void AWorldMap::GenerateChunk()
 			TotalChunkElements = TotalChunkFaceElements * SizeChunkX;
 			TotalFaceChunks = nbrChunkZ * nbrChunkY;
 			TotalChunks = TotalFaceChunks * nbrChunkX;
-			
+			Chunks.Init(nullptr, TotalChunks);
+			int i {0};
 			for (size_t x = 0; x < nbrChunkX ; x++)
 			{
 				for (size_t y = 0; y < nbrChunkY; y++)
@@ -65,7 +66,7 @@ void AWorldMap::GenerateChunk()
 					for (size_t z = 0; z < nbrChunkZ; z++)
 					{
 						//Expiremental
-						//FVector ActorLocation(GetActorLocation().X * x * SizeVoxel, GetActorLocation().Y * y * SizeVoxel, GetActorLocation().Z * z * SizeVoxel);
+						//FVector ActorLocation(GetActorLocation().X + x * SizeVoxel * SizeChunkX, GetActorLocation().Y + y * SizeVoxel * SizeChunkY, GetActorLocation().Z + z * SizeVoxel * SizeChunkZ);
 						AActor* Actor = WRLD->SpawnActor(AChunk::StaticClass(), &ActorLocation, &ActorRotation);
 						Chunk = Cast<AChunk>(Actor);
 						Chunk->Map = this;
@@ -78,7 +79,10 @@ void AWorldMap::GenerateChunk()
 						Chunk->SizeChunkX = SizeChunkX;
 						Chunk->SizeChunkY = SizeChunkY;
 						Chunk->SizeChunkZ = SizeChunkZ;
-						Chunks.Add(Chunk);
+						int SizeVoxelArray { this->SizeChunkX * this->SizeChunkY * this->SizeChunkZ};
+						Chunk->Voxels.Init(nullptr, SizeVoxelArray);
+						Chunks[i] = Chunk;
+						i++;
 					}
 				}
 			}
@@ -97,11 +101,13 @@ void AWorldMap::GenerateChunk()
 
 void AWorldMap::FillChunk() 
 {
-	int i {0};
+	
 	if (ReadyForGridGeneration)
 	{
+		
 		for (auto chunk : Chunks)
 		{
+			int i {0};
 			for (size_t x = chunk->StartX; x < chunk->StartX + SizeChunkX; x++)
 			{
 				for (size_t y = chunk->StartY; y < chunk->StartY + SizeChunkY; y++)
@@ -115,7 +121,8 @@ void AWorldMap::FillChunk()
 						Voxel->Chunk = chunk;
 						Voxel->WorldPosition = MakeVoxelWorldPosition(x,y,z);
 						Voxel->Density = DensityGenerator->GetDensity(x,y,z,this);
-						chunk->Voxels.Add(Voxel);
+						chunk->Voxels[i] = Voxel;
+						i++;
 					}
 				}
 				
@@ -131,6 +138,7 @@ void AWorldMap::GenerateMapMesh()
 	{
 		for (auto chunk: Chunks)
 		{
+			//chunk->InitializeArray();
 			chunk->GenerateMesh();
 		}
 	}
@@ -138,7 +146,8 @@ void AWorldMap::GenerateMapMesh()
 
 FVector AWorldMap::MakeVoxelWorldPosition(int x, int y, int z)
 {
-	return FVector(GetActorLocation().X + x * SizeVoxel, GetActorLocation().Y + y * SizeVoxel, GetActorLocation().Z + z * SizeVoxel);
+	return FVector(this->GetActorLocation().X + x * SizeVoxel, this->GetActorLocation().Y + y * SizeVoxel, this->GetActorLocation().Z + z * SizeVoxel);
+	
 }
 
 UVoxel* AWorldMap::FindVoxelByGridLocation(int x, int y, int z)

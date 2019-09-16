@@ -319,5 +319,6 @@ public:
 	void March(TArray<UVoxel*>& Voxels, float isoValue, AChunk* chunk);
 	int CalculateCubeIndex(TArray<UVoxel*>& Voxels, float isoValue);
 	void GenerateCubeShape(TArray<UVoxel*>& Voxels, int cubeIndex, AChunk* chunk, float isoValue);
+	FVector CalculateMiddleVectorBetweenTwo(FVector A, FVector B, bool Normalize);
 	FVector CalculateInterpolation(UVoxel* Voxel1, UVoxel* Voxel2, float isoValue);
 };

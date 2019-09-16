@@ -20,13 +20,7 @@ class MARCHINGCUBES_API UVoxel : public UObject
 public:
 
 	UPROPERTY()
-	bool HasBeenDigX {false};
-
-	UPROPERTY()
-	bool HasBeenDigY {false};
-
-	UPROPERTY()
-	bool HasBeenDigZ {false};
+	bool HasBeenDig {false};
 
 	UPROPERTY()
 	unsigned int X {0};

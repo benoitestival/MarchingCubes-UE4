@@ -11,20 +11,46 @@ UDensityNoise::UDensityNoise() {
 
 float UDensityNoise::GetDensity(int x, int y, int z, AWorldMap* Map)
 {
+	float frequency {1.0f};
+	float amplitude {1.0f};
+	float noiseHeight {0.0f};
 
-	return z - NoiseModule.GetNoise(x / Map->ScaleX, y / Map->ScaleY ) * Map->Multiplicator - Map->Offset;
+	for (size_t i = 0; i < Map->octaves; i++)
+	{
+		float Noise = z - NoiseModule.GetNoise(x / Map->ScaleX * frequency, y / Map->ScaleY * frequency) * Map->HeightMultiplicator - (Map->HeightMultiplicator / 2);
+		noiseHeight += Noise * amplitude;
+		amplitude *= Map->persistance;
+		frequency *= Map->lacunarity;
+	}
+	
+	//Clamp
+	if (noiseHeight > 100.0f)
+	{
+		noiseHeight = 100.0f;
+	}
+	if (noiseHeight < -100.0f)
+	{
+		noiseHeight = -100.0f;
+	}
+	noiseHeight /= 100;
 
+	if (Map->ShowLogNoise)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("%f"), noiseHeight);
+	}
+	
+	if (Map->UseRectShape) {
+		if (noiseHeight < 0)
+		{
+			noiseHeight = -1;
+		}
+		if (noiseHeight > 0)
+		{
+			noiseHeight = 1;
+		}
+	}
 
-	/*float ab = GetPerlinNoise(x, y);
-	float bc = GetPerlinNoise(y, z);
-	float ac = GetPerlinNoise(x, z);
-
-	float ba = GetPerlinNoise(y, x);
-	float cb = GetPerlinNoise(z, y);
-	float ca = GetPerlinNoise(z, x);
-
-	float abc = ab + bc + ac + ba + cb + ca;
-	return abc / 6.0f;*/
+	return noiseHeight;
 
 }
 

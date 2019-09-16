@@ -83,7 +83,6 @@ public:
 	virtual void OnConstruction(const FTransform & Transform) override;
 
 	void GenerateMesh();
-	void InitializeArray();
 	UVoxel* FindVoxelInChunk(int x, int y, int z);
 	AChunk* FindChunkByCoord(int x, int y, int z);
 	AChunk* FindChunkByDirection(EDirectionEnum Direction);
