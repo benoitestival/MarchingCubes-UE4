@@ -72,21 +72,11 @@ public:
 	UPROPERTY(Category = "OtherMapParameters", EditAnywhere)
 	float IsoValue {0.0f};
 
-	UPROPERTY(Category = "OtherMapParameters", EditAnywhere)
-	float RayonDig {300.0f};
-
-	UPROPERTY(Category = "Other", EditAnywhere)
-	bool CanDestroy {true};
-
 	UPROPERTY(Category = "Other", EditAnywhere)
 	bool UseRectShape {false};
 
 	UPROPERTY(Category = "Other", EditAnywhere)
 	bool ShowLogNoise {false};
-
-	UPROPERTY(Category = "Other", EditAnywhere)
-	bool ShowDebugDestroy {false};
-
 
 	UPROPERTY()
 	unsigned int TotalChunkFaceElements {0};

@@ -316,9 +316,7 @@ void AMarchingCubesCharacter::Dig(float Value)
 {
 	if (Value != 0.0f)
 	{
-
-		// add movement in that direction
-		DigComponent->Dig();
+		DigComponent->Dig(FirstPersonCameraComponent->GetForwardVector());
 	}
 	
 }

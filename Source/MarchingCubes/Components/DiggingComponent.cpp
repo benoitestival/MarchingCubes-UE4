@@ -39,85 +39,86 @@ void UDiggingComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 	// ...
 }
 
-void UDiggingComponent::Dig()
+void UDiggingComponent::Dig(FVector Direction)
 {
 	FHitResult HitResult;
 	FVector Start(GetOwner()->GetActorLocation());
-	FVector End = Start + GetOwner()->GetActorForwardVector() * 1000;
+	FVector End = Start + Direction * 1000;
 	if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility)) {
 		if (HitResult.GetActor()->IsA(AChunk::StaticClass())){
 			
 			AChunk* Chunk = Cast<AChunk>(HitResult.GetActor());
 
-			if (Chunk->Map->CanDestroy) {
-				UVoxel* VoxelHit = Chunk->Map->FindVoxelByWolrdLocation(HitResult.Location, Chunk);
+			UVoxel* VoxelHit = Chunk->Map->FindVoxelByWolrdLocation(HitResult.Location, Chunk);
 
-				if (VoxelHit != nullptr)
+			if (VoxelHit != nullptr)
+			{
+				if (ShowLog) {
+					DrawDebugSphere(GetWorld(), VoxelHit->WorldPosition, Rayon, 26, FColor(255, 0, 0), true, 100, 0, 2);
+				}
+				int XStart = VoxelHit->X - OffsetForVoxel;
+				int YStart = VoxelHit->Y - OffsetForVoxel;
+				int ZStart = VoxelHit->Z - OffsetForVoxel;
+
+				for (size_t x = XStart; x < VoxelHit->X + OffsetForVoxel; x++)
 				{
-					if (ShowLog) {
-						DrawDebugSphere(GetWorld(), VoxelHit->WorldPosition, Rayon, 26, FColor(255, 0, 0), true, 100, 0, 2);
-					}
-					int XStart = VoxelHit->X - OffsetForVoxel;
-					int YStart = VoxelHit->Y - OffsetForVoxel;
-					int ZStart = VoxelHit->Z - OffsetForVoxel;
-
-					for (size_t x = XStart; x < VoxelHit->X + OffsetForVoxel; x++)
+					for (size_t y = YStart; y < VoxelHit->Y + OffsetForVoxel; y++)
 					{
-						for (size_t y = YStart; y < VoxelHit->Y + OffsetForVoxel; y++)
+						for (size_t z = ZStart; z < VoxelHit->Z + OffsetForVoxel; z++)
 						{
-							for (size_t z = ZStart; z < VoxelHit->Z + OffsetForVoxel; z++)
-							{
-								UVoxel* VoxelCheck = Chunk->Map->FindVoxelByGridLocation(x, y, z);
-								if (VoxelCheck != nullptr){
-									if (GetDistance(VoxelCheck->WorldPosition, VoxelHit->WorldPosition) < Rayon){
-										VoxelCheck->Density = 0.5;
-									}
+							UVoxel* VoxelCheck = Chunk->Map->FindVoxelByGridLocation(x, y, z);
+							if (VoxelCheck != nullptr) {
+								if (GetDistance(VoxelCheck->WorldPosition, VoxelHit->WorldPosition) < Rayon) {
+									VoxelCheck->Density = 0.5;
 								}
 							}
 						}
 					}
+				}
 
-					for (size_t x = XStart; x < VoxelHit->X + 10; x++)
+				for (size_t x = XStart; x < VoxelHit->X + 10; x++)
+				{
+					for (size_t y = YStart; y < VoxelHit->Y + 10; y++)
 					{
-						for (size_t y = YStart; y < VoxelHit->Y + 10; y++)
+						for (size_t z = ZStart; z < VoxelHit->Z + 10; z++)
 						{
-							for (size_t z = ZStart; z < VoxelHit->Z + 10; z++)
-							{
-								UVoxel* VoxelCheck = Chunk->Map->FindVoxelByGridLocation(x, y, z);
+							UVoxel* VoxelCheck = Chunk->Map->FindVoxelByGridLocation(x, y, z);
 
-								if (VoxelCheck != nullptr){
-									UVoxel* VoxelTop = Chunk->Map->FindVoxelByGridLocation(x, y, z + 1);
-									UVoxel* VoxelRight = Chunk->Map->FindVoxelByGridLocation(x, y + 1, z);
-									UVoxel* VoxelForward = Chunk->Map->FindVoxelByGridLocation(x + 1, y, z);
+							if (VoxelCheck != nullptr) {
+								UVoxel* VoxelTop = Chunk->Map->FindVoxelByGridLocation(x, y, z + 1);
+								UVoxel* VoxelRight = Chunk->Map->FindVoxelByGridLocation(x, y + 1, z);
+								UVoxel* VoxelForward = Chunk->Map->FindVoxelByGridLocation(x + 1, y, z);
 
-									ActualizedChunks.AddUnique(VoxelCheck->Chunk);
+								ActualizedChunks.AddUnique(VoxelCheck->Chunk);
 
-									if (VoxelTop != nullptr) {
-										CheckAxis(VoxelCheck, VoxelTop, Rayon, VoxelHit->WorldPosition, Chunk->Map->IsoValue, 2);
-										ActualizedChunks.AddUnique(VoxelTop->Chunk);
+								if (VoxelTop != nullptr) {
+									CheckAxis(VoxelCheck, VoxelTop, Rayon, VoxelHit->WorldPosition, Chunk->Map->IsoValue, 2);
+									ActualizedChunks.AddUnique(VoxelTop->Chunk);
 
-									}
-									if (VoxelForward != nullptr) {
-										CheckAxis(VoxelCheck, VoxelForward, Rayon, VoxelHit->WorldPosition, Chunk->Map->IsoValue, 0);
-										ActualizedChunks.AddUnique(VoxelForward->Chunk);
+								}
+								if (VoxelForward != nullptr) {
+									CheckAxis(VoxelCheck, VoxelForward, Rayon, VoxelHit->WorldPosition, Chunk->Map->IsoValue, 0);
+									ActualizedChunks.AddUnique(VoxelForward->Chunk);
 
-									}
-									if (VoxelRight != nullptr) {
-										CheckAxis(VoxelCheck, VoxelRight, Rayon, VoxelHit->WorldPosition, Chunk->Map->IsoValue, 1);
-										ActualizedChunks.AddUnique(VoxelRight->Chunk);
+								}
+								if (VoxelRight != nullptr) {
+									CheckAxis(VoxelCheck, VoxelRight, Rayon, VoxelHit->WorldPosition, Chunk->Map->IsoValue, 1);
+									ActualizedChunks.AddUnique(VoxelRight->Chunk);
 
-									}
-								}	
+								}
 							}
 						}
 					}
-
+				}
+				if (ActualizedChunks.Num() > 0)
+				{
 					for (auto chunk : ActualizedChunks) {
 						if (chunk != nullptr)
 						{
 							chunk->GenerateMesh();
 						}
 					}
+					ActualizedChunks.Empty();
 				}
 			}	
 		}

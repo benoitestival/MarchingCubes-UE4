@@ -34,6 +34,10 @@ public:
 	FORCEINLINE class USphereComponent* GetCollisionComp() const { return CollisionComp; }
 	/** Returns ProjectileMovement subobject **/
 	FORCEINLINE class UProjectileMovementComponent* GetProjectileMovement() const { return ProjectileMovement; }
+
+	/*float GetDistance(FVector A, FVector B);
+	void CheckAxis(UVoxel* Voxel, UVoxel* NextVoxel, int rayon, FVector HitLocation, float IsoValue, int Axis);
+	FVector GetCrossingPoint(UVoxel* Voxel, UVoxel* NextVoxel, FVector CenterOfCircle, float rayon ,bool IsVoxelCheckInSphere);*/
 	
 
 };
