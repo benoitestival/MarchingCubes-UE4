@@ -4,7 +4,7 @@
 
 Generate using FastNoise and Marching cubes algorithm.
 
-Download The project, generate Visual Studio files, compile, put an object worldMap in the scene, play.
+Download The project, generate Visual Studio files, compile and play.
 
 Resources that helped me:
 - http://paulbourke.net/geometry/polygonise/
